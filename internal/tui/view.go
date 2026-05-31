@@ -152,13 +152,6 @@ func (m model) renderList(width, height int) string {
 		lines = append(lines, "")
 	}
 
-	if start > 0 {
-		lines[0] = mutedStyle.Width(width).Render("more above")
-	}
-	if end < len(m.filtered) {
-		lines[end-start-1] = mutedStyle.Width(width).Render("more below")
-	}
-
 	return lipgloss.NewStyle().Width(width).Height(height).Render(strings.Join(lines, "\n"))
 }
 
