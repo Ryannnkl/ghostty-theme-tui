@@ -77,6 +77,10 @@ rm ~/.local/bin/ghostty-theme-tui
 The app previews themes in the current terminal while you browse. It only edits
 your Ghostty config after you press `Enter`.
 
+After saving, it asks running Ghostty processes to reload their config so new
+tabs use the selected theme. If automatic reload is not available in your
+Ghostty version, press `Ctrl+Shift+,` after saving.
+
 The config file is:
 
 ```text

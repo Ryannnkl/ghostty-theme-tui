@@ -32,6 +32,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.message = msg.err.Error()
 			return m, nil
 		}
+		if msg.reloadErr != nil {
+			m.currentTheme = msg.name
+			m.message = "Saved, but Ghostty reload failed. Press Ctrl+Shift+, to reload config."
+			return m, nil
+		}
 		m.confirmed = true
 		m.quitting = true
 		m.message = "Saved " + msg.name

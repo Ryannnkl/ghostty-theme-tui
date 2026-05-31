@@ -35,8 +35,9 @@ type loadThemesMsg struct {
 }
 
 type saveThemeMsg struct {
-	name string
-	err  error
+	name      string
+	err       error
+	reloadErr error
 }
 
 type previewMsg struct {
@@ -78,7 +79,11 @@ func loadThemes(color string) tea.Cmd {
 
 func saveTheme(name string) tea.Cmd {
 	return func() tea.Msg {
-		return saveThemeMsg{name: name, err: ghostty.SaveTheme(name)}
+		if err := ghostty.SaveTheme(name); err != nil {
+			return saveThemeMsg{name: name, err: err}
+		}
+		_, reloadErr := ghostty.ReloadConfig()
+		return saveThemeMsg{name: name, reloadErr: reloadErr}
 	}
 }
 

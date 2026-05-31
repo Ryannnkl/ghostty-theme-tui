@@ -3,11 +3,14 @@ package ghostty
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"syscall"
 )
 
 func ConfigPath() (string, error) {
@@ -133,6 +136,58 @@ func ValidateConfig() error {
 		return fmt.Errorf("validate config: %s", message)
 	}
 	return nil
+}
+
+func ReloadConfig() (int, error) {
+	pids := make(map[int]struct{})
+	for _, name := range []string{"ghostty", "Ghostty"} {
+		found, err := findProcessIDs(name)
+		if err != nil {
+			return 0, err
+		}
+		for _, pid := range found {
+			pids[pid] = struct{}{}
+		}
+	}
+
+	count := 0
+	for pid := range pids {
+		process, err := os.FindProcess(pid)
+		if err != nil {
+			continue
+		}
+		if err := process.Signal(syscall.SIGUSR2); err != nil {
+			return count, fmt.Errorf("reload ghostty pid %d: %w", pid, err)
+		}
+		count++
+	}
+
+	return count, nil
+}
+
+func findProcessIDs(name string) ([]int, error) {
+	output, err := exec.Command("pgrep", "-x", name).Output()
+	if err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("find %s processes: %w", name, err)
+	}
+
+	var pids []int
+	for _, line := range strings.Split(strings.TrimSpace(string(output)), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		pid, err := strconv.Atoi(line)
+		if err != nil {
+			continue
+		}
+		pids = append(pids, pid)
+	}
+	return pids, nil
 }
 
 func restoreBackup(path, backupPath string, original []byte, existed bool) error {
